@@ -230,7 +230,7 @@ export const getAllPaths = (routes: RouteShape | RouteShape[]): string[] => {
  * assumed that this is a 404 route. See the RR changelong for details:
  * https://github.com/rackt/react-router/blob/1.0.x/CHANGES.md#notfound-route
  */
-export const getAssetKey = (location: string): string => {
+export const getAssetKey = (location: string, indexPaths : boolean): string => {
   const basename = path.basename(location);
   const dirname = path.dirname(location).slice(1); // See NOTE above
   let filename;
@@ -240,7 +240,7 @@ export const getAssetKey = (location: string): string => {
   } else if (basename === '*') {
     filename = '404.html';
   } else {
-    filename = basename + '.html';
+    filename = basename + (indexPaths ? '/index' : '') + '.html';
   }
 
   return dirname ? (dirname + path.sep + filename) : filename;

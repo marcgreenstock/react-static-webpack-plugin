@@ -233,7 +233,7 @@ StaticSitePlugin.prototype.apply = function(compiler) {
 
           const route = renderProps.routes[renderProps.routes.length - 1]; // See NOTE
           const body = renderToString(component);
-          const assetKey = getAssetKey(location);
+          const assetKey = getAssetKey(location, options.indexPaths);
           const doc = this.render({
             ...addHash(options, compilation.hash),
             title: route.title,
