@@ -9,6 +9,7 @@ import Promise from 'bluebird';
 import vm from 'vm';
 import webpack from 'webpack';
 import SingleEntryPlugin from 'webpack/lib/SingleEntryPlugin';
+import { createRoutes } from 'react-router'
 
 import type { OptionsShape } from './constants.js';
 
@@ -178,22 +179,6 @@ type RouteShape = {
 }
 
 /**
- * NOTE: We could likely use createRoutes to our advantage here. It may simplify
- * the code we currently use to recurse over the virtual dom tree:
- *
- * import { createRoutes } from 'react-router';
- * console.log(createRoutes(routes)); =>
- * [ { path: '/',
- *    component: [Function: Layout],
- *    childRoutes: [ [Object], [Object] ] } ]
- *
- * Ex:
- * const routes = (
- *   <Route component={App} path='/'>
- *     <Route component={About} path='/about' />
- *   </Route>
- * );
- *
  * getAllPaths(routes); => ['/', '/about]
  */
 type GetNestedPaths = (a: RouteShape | RouteShape[], b: ?string) => any[];
@@ -202,17 +187,23 @@ export const getNestedPaths: GetNestedPaths = (route, prefix = '') => {
 
   if (Array.isArray(route)) return route.map(x => getNestedPaths(x, prefix));
 
-  // Some routes such as redirects or index routes do not have a component. Skip
-  // them.
-  if (hasNoComponent(route)) return [];
+  if (!route.path) return [];
 
-  const path = prefix + route.props.path;
+  const path = prefix + route.path;
   const nextPrefix = path === '/' ? path : path + '/';
-  return [path, ...getNestedPaths(route.props.children, nextPrefix)];
-};
+  const children = getNestedPaths(route.childRoutes, nextPrefix);
+
+  if (route.component) {
+    // If the route has a component return the path with its children
+    return [path, ...children];
+  } else {
+    // If the route does not have a component, it may be a nested parent.
+    return children;
+  }
+}
 
 export const getAllPaths = (routes: RouteShape | RouteShape[]): string[] => {
-  return flattenDeep(getNestedPaths(routes));
+  return flattenDeep(getNestedPaths(createRoutes(routes)));
 };
 
 /**
